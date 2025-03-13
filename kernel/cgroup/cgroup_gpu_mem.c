@@ -1,3 +1,4 @@
+#include <linux/module.h>
 #include <linux/cgroup.h>
 #include <linux/mutex.h>
 #include <linux/kernel.h>

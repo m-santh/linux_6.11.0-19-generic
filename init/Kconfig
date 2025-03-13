@@ -981,6 +981,12 @@ config CGROUP_FAVOR_DYNMODS
 
           Say N if unsure.
 
+config CGROUP_GPU_MEM
+    bool "Enable GPU Memory Cgroup Controller"
+    depends on CGROUPS
+    help
+      Enable control of GPU memory usage per process using cgroups.
+
 config MEMCG
 	bool "Memory controller"
 	select PAGE_COUNTER

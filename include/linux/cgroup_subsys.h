@@ -65,6 +65,10 @@ SUBSYS(rdma)
 SUBSYS(misc)
 #endif
 
+#if IS_ENABLED(CONFIG_CGROUP_GPU_MEM)
+SUBSYS(gpu_mem)
+#endif
+
 /*
  * The following subsystems are not supported on the default hierarchy.
  */
