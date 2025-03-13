@@ -31,6 +31,8 @@ static char *gpu_app_mode_name[] = {
 	"proportionate"
 };
 
+static get_gpu_mem_cgroup_task_limit_change_t gpu_mem_task_callback = NULL;
+
 /* Global cgroup variables */
 static spinlock_t gpu_lock;
 //static int eviction = EVICTION_PRIORITY;

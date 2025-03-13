@@ -17,7 +17,6 @@ typedef enum {
 } GPUChangeCommand;
 
 typedef int (*get_gpu_mem_cgroup_task_limit_change_t)(pid_t pid, GPUChangeCommand cmd, unsigned long new_val);
-static get_gpu_mem_cgroup_task_limit_change_t gpu_mem_task_callback = NULL;
 
 typedef enum {
     EVICTION_PRIORITY = 0,
