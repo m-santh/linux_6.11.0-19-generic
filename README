@@ -1,5 +1,13 @@
 # linux_6.11.0-19-generic (ubuntu 24.04)
 
+Steps to compile and install
+
+1. Git clone
+2. make -j $(nproc)
+3. sudo make -j $(nproc) modules_install
+4. sudo make -j $(nproc) install
+5. sudo update-grub
+
 Linux kernel
 ============
 
