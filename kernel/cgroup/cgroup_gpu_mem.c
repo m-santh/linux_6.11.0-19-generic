@@ -112,6 +112,8 @@ static void notify_uvm_about_cgroup_change(struct cgroup_subsys_state *css, GPUC
 /* Read and write functions for GPU memory limits */
 static u64 gpu_mem_ml_read(struct cgroup_subsys_state *css, struct cftype *cft) {
     struct gpu_mem_cgroup *cg = gpu_mem_cgroup_from_css(css);
+    if (cg == NULL)
+	    return 0;
     return cg->hard_limit;
 }
 
@@ -120,6 +122,9 @@ static ssize_t gpu_mem_ml_write(struct kernfs_open_file *of, char *buf, size_t n
     unsigned long limit;
     if (kstrtoul(buf, 10, &limit))
         return -EINVAL;
+
+    if (cg == NULL)
+	    return -EINVAL;
 
     spin_lock(&cg->lock);
     if (cg->hard_limit != limit)
@@ -133,6 +138,8 @@ static ssize_t gpu_mem_ml_write(struct kernfs_open_file *of, char *buf, size_t n
 
 static u64 gpu_mem_sl_read(struct cgroup_subsys_state *css, struct cftype *cft) {
     struct gpu_mem_cgroup *cg = gpu_mem_cgroup_from_css(css);
+    if (cg == NULL)
+	    return 0;
     return cg->soft_limit;
 }
 
@@ -142,6 +149,8 @@ static ssize_t gpu_mem_sl_write(struct kernfs_open_file *of, char *buf, size_t n
     if (kstrtoul(buf, 10, &limit))
         return -EINVAL;
 
+    if (cg == NULL)
+        return -EINVAL;
     spin_lock(&cg->lock);
     if (cg->soft_limit != limit)
 	    notify_uvm_about_cgroup_change(of_css(of), SOFT_LIMIT_CHANGE, limit);
@@ -156,7 +165,12 @@ static int gpu_mem_mode_read(struct seq_file *sf, void *v)
 {
     struct cgroup_subsys_state *css = seq_css(sf);
     struct gpu_mem_cgroup *cg = gpu_mem_cgroup_from_css(css);
-    const char *mode = mode_int_to_string(cg->mode);
+    char *mode;
+   
+    if (cg == NULL)
+	    return -EINVAL;
+
+    mode = mode_int_to_string(cg->mode);
 
     pr_info("mode read sf %p, css %p cg %p\n", sf, css, cg);
 
@@ -178,6 +192,9 @@ static ssize_t gpu_mem_mode_write(struct kernfs_open_file *of, char *buf, size_t
 	return -EINVAL;
     }
 
+    if (cg == NULL)
+	return -EINVAL;
+
     spin_lock(&cg->lock);
     if (cg->mode != mode)
 	    notify_uvm_about_cgroup_change(of_css(of), MODE_CHANGE, mode);
@@ -191,7 +208,11 @@ static ssize_t gpu_mem_mode_write(struct kernfs_open_file *of, char *buf, size_t
 static int gpu_mem_eviction_read(struct seq_file *sf, void *v)
 {
     struct gpu_mem_cgroup *cg = gpu_mem_cgroup_from_css(seq_css(sf));
-    const char *str_eviction = eviction_policy_to_string(cg->eviction);
+    char *str_eviction;
+    if (cg == NULL)
+	    return -EINVAL;
+
+    str_eviction = eviction_policy_to_string(cg->eviction);
 
     seq_printf(sf, "%s\n", str_eviction);
 
@@ -209,6 +230,9 @@ static ssize_t gpu_mem_eviction_write(struct kernfs_open_file *of, char *buf, si
     if (local_eviction == EVICTION_INVALID)
 	    return -EINVAL;
 
+    if (cg == NULL)
+	    return -EINVAL;
+
     spin_lock(&cg->lock);
     if (cg->eviction != local_eviction)
 	    notify_uvm_about_cgroup_change(of_css(of), EVICTION_CHANGE, local_eviction);
@@ -221,6 +245,8 @@ static ssize_t gpu_mem_eviction_write(struct kernfs_open_file *of, char *buf, si
 
 static u64 gpu_mem_weight_read(struct cgroup_subsys_state *css, struct cftype *cft) {
     struct gpu_mem_cgroup *cg = gpu_mem_cgroup_from_css(css);
+    if (cg == NULL)
+	    return 0;
     return (u64)cg->weight;
 }
 
@@ -228,6 +254,9 @@ static ssize_t gpu_mem_weight_write(struct kernfs_open_file *of, char *buf, size
     struct gpu_mem_cgroup *cg = gpu_mem_cgroup_from_css(of_css(of));
     int weight;
     if (kstrtoint(buf, 10, &weight))
+        return -EINVAL;
+
+    if (cg == NULL)
         return -EINVAL;
 
     spin_lock(&cg->lock);
@@ -243,12 +272,16 @@ static ssize_t gpu_mem_weight_write(struct kernfs_open_file *of, char *buf, size
 static u64 gpu_mem_phl_read(struct cgroup_subsys_state *css, struct cftype *cft) {
 
     struct gpu_mem_cgroup *cg = gpu_mem_cgroup_from_css(css);
+    if (cg == NULL)
+	    return 0;
     return cg->prop_hard_limit;
 }
 
 static u64 gpu_mem_usage_read(struct cgroup_subsys_state *css, struct cftype *cft) {
 
     struct gpu_mem_cgroup *cg = gpu_mem_cgroup_from_css(css);
+    if (cg == NULL)
+	    return 0;
     return cg->curr_gpu_mem_used;
 }
 
@@ -336,13 +369,13 @@ static struct cgroup_subsys_state *gpu_mem_css_alloc(struct cgroup_subsys_state 
     if (!cg)
         return ERR_PTR(-ENOMEM);
 
-    cg->hard_limit = ULONG_MAX;  /* Hard limit on GPU memory */
-    cg->soft_limit = ULONG_MAX;  /* Soft limit (preferred max beyond hard-limit) */
-    cg->prop_hard_limit = ULONG_MAX;  /* proportionate hard limit (preferred max beyond hard-limit) */
+    cg->hard_limit = DEFAULT_GPU_HARD_LIMIT;  /* Hard limit on GPU memory */
+    cg->soft_limit = DEFAULT_GPU_HARD_LIMIT;  /* Soft limit (preferred max beyond hard-limit) */
+    cg->prop_hard_limit = DEFAULT_GPU_HARD_LIMIT;  /* proportionate hard limit (preferred max beyond hard-limit) */
     cg->curr_gpu_mem_used = 0;  /* current gpu memory used */
     cg->mode = PROPORTIONATE_MODE;                  /* Mode (strict = 8, proportionate = 88) */
     cg->weight = 1;                /* proportionate weight */
-    cg->eviction = EVICTION_PRIORITY;
+    cg->eviction = EVICTION_FIFO;
     spin_lock_init(&cg->lock);
     return &cg->css;
 }
@@ -377,7 +410,7 @@ int set_gpu_mem_cgroup_global_gpu_mem(unsigned long strict_mem, unsigned long pr
 }
 EXPORT_SYMBOL(set_gpu_mem_cgroup_global_gpu_mem);
 
-int get_gpu_mem_cgroup_task_limits(struct task_struct *task, unsigned long *hard_limit, unsigned long *soft_limit, int *mode, int *weight, int *eviction)
+int get_gpu_mem_cgroup_task_limits(struct task_struct *task, unsigned long *hard_limit, unsigned long *soft_limit, unsigned long *prop_limit, int *mode, int *weight, int *eviction)
 {
     struct cgroup_subsys_state *css;
     struct gpu_mem_cgroup *cg;
@@ -390,9 +423,13 @@ int get_gpu_mem_cgroup_task_limits(struct task_struct *task, unsigned long *hard
         return -EINVAL; 
 
     cg = gpu_mem_cgroup_from_css(css);
+    if(cg == NULL)
+        return -EINVAL; 
     *hard_limit = cg->hard_limit;
     *soft_limit = cg->soft_limit;
+    *prop_limit = cg->prop_hard_limit;
     *mode =  cg->mode;
+
     *weight =  cg->weight;
     *eviction =  cg->eviction;
 
@@ -413,6 +450,8 @@ int set_gpu_mem_cgroup_task_limits(struct task_struct *task, unsigned long prop_
         return -EINVAL; 
 
     cg = gpu_mem_cgroup_from_css(css);
+    if (cg == NULL)
+	    return -EINVAL;
 
     spin_lock(&cg->lock);
     cg->prop_hard_limit = prop_limit;
