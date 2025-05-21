@@ -7,7 +7,7 @@ Steps to compile and install
    for build kernel, you might have to install packages
    sudo apt install flex bison libncurses-dev libssl-dev
 3. make oldconfig
-4. enable CONFIG_CGROUP_GPU_MEM
+4. enable CONFIG_CGROUP_GPU_MEM (make menuconfig and search for CGROUP_GPU_MEM)
 5. make -j $(nproc)
 6. sudo make -j $(nproc) modules_install
 7. sudo make -j $(nproc) install
