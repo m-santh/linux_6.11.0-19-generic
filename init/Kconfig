@@ -984,6 +984,7 @@ config CGROUP_FAVOR_DYNMODS
 config CGROUP_GPU_MEM
     bool "Enable GPU Memory Cgroup Controller"
     depends on CGROUPS
+    default y
     help
       Enable control of GPU memory usage per process using cgroups.
 
