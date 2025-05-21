@@ -13,6 +13,11 @@ Steps to compile and install
 7. sudo make -j $(nproc) install
 8. sudo update-grub
 
+if you get debian signing error, then do the following.
+sudo apt install linux-source
+mkdir debian
+cp /usr/src/linux-source*/debian/canc*.pem debian
+
 Linux kernel
 ============
 
