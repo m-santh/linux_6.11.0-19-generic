@@ -3,10 +3,13 @@
 Steps to compile and install
 
 1. Git clone
-2. make -j $(nproc)
-3. sudo make -j $(nproc) modules_install
-4. sudo make -j $(nproc) install
-5. sudo update-grub
+2. cp /boot/config-$(uname -r) .config
+3. make oldconfig
+4. enable CONFIG_CGROUP_GPU_MEM
+5. make -j $(nproc)
+6. sudo make -j $(nproc) modules_install
+7. sudo make -j $(nproc) install
+8. sudo update-grub
 
 Linux kernel
 ============
