@@ -4,6 +4,8 @@ Steps to compile and install
 
 1. Git clone
 2. cp /boot/config-$(uname -r) .config
+   for build kernel, you might have to install packages
+   sudo apt install flex bison libncurses-dev libssl-dev
 3. make oldconfig
 4. enable CONFIG_CGROUP_GPU_MEM
 5. make -j $(nproc)
